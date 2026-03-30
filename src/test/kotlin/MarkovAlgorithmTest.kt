@@ -1,8 +1,7 @@
-
 import markov.core.MarkovAlgorithm
 import markov.parser.parseRules
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Assertions.*
 
 class MarkovAlgorithmTest {
 
@@ -97,5 +96,18 @@ class MarkovAlgorithmTest {
         val result = markov.run("1001+100001=")
 
         assertEquals("1001100001", result)
+    }
+
+    @Test
+    fun testRunWithTrace() {
+        val rules = parseRules(listOf(
+            "a -> b",
+            "b ->. DONE"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.runWithTrace("a", verbose = false)
+
+        assertEquals("DONE", result)
     }
 }
