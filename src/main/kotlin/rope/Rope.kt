@@ -6,23 +6,21 @@ sealed class Rope {
 
     data class Leaf(val text: String) : Rope() {
         override val length: Int = text.length
-    }
 
-    data class Node(
-        val left: Rope,
-        val right: Rope
-    ) : Rope() {
-        override val length: Int = left.length + right.length
+        override fun toString(): String = this.text
     }
 
     companion object {
-
         fun fromString(s: String): Rope = Leaf(s)
 
         fun concat(a: Rope, b: Rope): Rope {
-            if (a.length == 0) return b
-            if (b.length == 0) return a
-            return Node(a, b)
+            return Leaf(a.toString() + b.toString())
+        }
+    }
+
+    override fun toString(): String {
+        return when (this) {
+            is Leaf -> this.text
         }
     }
 }

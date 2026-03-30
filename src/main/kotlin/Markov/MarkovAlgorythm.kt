@@ -6,7 +6,6 @@ import util.delete
 import util.indexOf
 import util.insert
 import util.print
-import util.toStr
 
 
 class MarkovAlgorithm(private val rules: List<Rule>) {
@@ -33,7 +32,8 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
                     applied = true
 
                     if (rule.isTerminal) {
-                        return rope.toStr()
+                        val result = java.lang.String.valueOf(rope.toString())
+                        return result
                     }
 
                     break
@@ -44,6 +44,7 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
             steps++
         }
 
-        return rope.toStr()
+        val result = java.lang.String.valueOf(rope.toString())
+        return result
     }
 }
