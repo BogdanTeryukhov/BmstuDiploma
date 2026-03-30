@@ -1,41 +1,50 @@
-package org.example.Markov
+package markov.core
 
-data class Rule(
-    val left: String,
-    val right: String,
-    val isTerminal: Boolean
-)
+import markov.parser.Rule
+import rope.Rope
+import util.delete
+import util.indexOf
+import util.insert
+import util.print
+
 
 class MarkovAlgorithm(private val rules: List<Rule>) {
 
-    fun run(input: String): String {
+    fun run(input: String, maxSteps: Int = 10000): String {
 
-        var current = input
+        var rope: Rope = Rope.fromString(input)
+        var steps = 0
 
-        while (true) {
+        while (steps < maxSteps) {
 
             var applied = false
 
             for (rule in rules) {
 
-                val index = current.indexOf(rule.left)
+                val index = rope.indexOf(rule.left)
 
                 if (index != -1) {
 
-                    current = current.replaceFirst(rule.left, rule.right)
+                    rope = delete(rope, index, rule.left.length)
+                    rope = insert(rope, index, rule.right)
+                    rope.print()
+
                     applied = true
 
                     if (rule.isTerminal) {
-                        return current
+                        val result = java.lang.String.valueOf(rope.toString())
+                        return result
                     }
 
                     break
                 }
             }
 
-            if (!applied) {
-                return current
-            }
+            if (!applied) break
+            steps++
         }
+
+        val result = java.lang.String.valueOf(rope.toString())
+        return result
     }
 }

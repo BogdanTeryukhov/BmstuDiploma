@@ -1,5 +1,6 @@
-import org.example.Markov.MarkovAlgorithm
-import org.example.util.parseRules
+
+import markov.core.MarkovAlgorithm
+import markov.parser.parseRules
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
