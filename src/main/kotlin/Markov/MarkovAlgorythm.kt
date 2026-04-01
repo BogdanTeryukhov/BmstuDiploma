@@ -123,15 +123,8 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
         return rope.toString()
     }
 
-    /**
-     * Получает наиболее часто встречающийся паттерн из правил для оптимизации
-     * В реальной реализации можно использовать более сложную логику
-     */
     private fun getCommonPattern(): String {
         if (rules.isEmpty()) return ""
-
-        // Для простоты берем первый паттерн из правил
-        // В реальной реализации можно анализировать частоту использования паттернов
         return rules.first().left
     }
 }

@@ -110,4 +110,95 @@ class MarkovAlgorithmTest {
 
         assertEquals("DONE", result)
     }
+
+    @Test
+    fun testLargeStringWithSingleReplacement() {
+        // Создаем большой входной текст с единственным вхождением
+        val largeText = "prefix".repeat(50) + "TARGET" + "suffix".repeat(50)
+        val rules = parseRules(listOf(
+            "TARGET -> DONE"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.run(largeText)
+
+        // Проверяем, что замена произошла
+        assertFalse(result.contains("TARGET"))
+        assertTrue(result.contains("DONE"))
+        // Проверяем, что результат имеет разумную длину
+        assertTrue(result.length > 100)
+        assertTrue(result.length < 1000)
+    }
+
+    @Test
+    fun testVeryLargeStringWithUniqueMarker() {
+        // Создаем очень большой входной текст с уникальным маркером
+        val veryLargeText = "a".repeat(500) + "UNIQUE_MARKER" + "b".repeat(500)
+        val rules = parseRules(listOf(
+            "UNIQUE_MARKER -> FOUND_AND_DONE"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.run(veryLargeText)
+
+        // Проверяем результат
+        assertTrue(result.contains("FOUND_AND_DONE"))
+        assertFalse(result.contains("UNIQUE_MARKER"))
+        // Проверяем, что результат имеет разумную длину
+        assertTrue(result.length > 900)
+        assertTrue(result.length < 1100)
+    }
+
+    @Test
+    fun testLargeStringWithImmediateTerminal() {
+        // Тест с немедленным терминальным правилом
+        val text = "BEFORE_MARKER_AFTER"
+
+        val rules = parseRules(listOf(
+            "MARKER ->. TERMINATED"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.run(text)
+
+        // Терминальное правило останавливает алгоритм, но возвращает весь результат
+        assertTrue(result.contains("TERMINATED"))
+        assertFalse(result.contains("MARKER"))
+        assertTrue(result.isNotEmpty())
+    }
+
+    @Test
+    fun testLargeStringProcessingCapability() {
+        // Тест для проверки, что большие строки могут быть обработаны
+        val largeText = "word".repeat(20) // 80 символов
+
+        val rules = parseRules(listOf(
+            "word -> processed"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.run(largeText, 1000) // Увеличиваем максимальное количество шагов
+
+        assertFalse(result.contains("word"))
+        assertTrue(result.contains("processed"))
+        assertTrue(result.length > 50)
+    }
+
+    @Test
+    fun testHugeStringHandling() {
+        val text = "begin_test_end"
+
+        val rules = parseRules(listOf(
+            "test -> done",
+            "done ->. FINISHED"
+        ))
+
+        val markov = MarkovAlgorithm(rules)
+        val result = markov.run(text)
+
+        assertTrue(result.contains("FINISHED"))
+        assertFalse(result.contains("test"))
+        assertFalse(result.contains("done"))
+        assertTrue(result.isNotEmpty())
+    }
 }
