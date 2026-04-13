@@ -19,12 +19,6 @@ tasks.test {
     useJUnitPlatform()
 }
 
-tasks.register<JavaExec>("runExample") {
-    dependsOn(tasks.classes)
-    mainClass.set("examples.EnhancedRopeExampleKt")
-    classpath = sourceSets["main"].runtimeClasspath
-}
-
 tasks.register<Test>("runAllTests") {
     useJUnitPlatform()
     filter {

@@ -5,7 +5,7 @@ package automata
  *
  * @param pattern искомая подстрока
  */
-class KmpAutomaton(private val pattern: String) : Automaton<Int, Char> {
+class KmpAutomaton(val pattern: String) : Automaton<Int, Char> {
 
     // Таблица отказов для алгоритма KMP
     private val failureTable: IntArray = computeFailureFunction(pattern)
@@ -90,7 +90,11 @@ class KmpAutomaton(private val pattern: String) : Automaton<Int, Char> {
             for ((index, char) in input.withIndex()) {
                 state = transition(state, char)
                 if (isFinal(state)) {
-                    return index + 1
+                    val result = index + 1
+                    if (pattern == "c0") {
+                        println("DEBUG KMP: Found at distance $result")
+                    }
+                    return result
                 }
             }
             return -1 // Финальное состояние не достигнуто

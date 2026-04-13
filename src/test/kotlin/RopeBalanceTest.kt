@@ -9,7 +9,7 @@ class RopeBalanceTest {
     @Test
     fun testBalanceMechanism() {
         // Создаем верёвку, которая должна быть автоматически сбалансирована
-        val rope = EnhancedRope.fromString("a".repeat(3000), "")
+        val rope = EnhancedRope.fromString("a".repeat(3000))
 
         // Проверяем, что результат корректный
         assertEquals(3000, rope.length)
@@ -23,7 +23,7 @@ class RopeBalanceTest {
     @Test
     fun testAutomaticBalancing() {
         // Создаем верёвку, которая должна быть сбалансирована
-        val rope = EnhancedRope.fromString("a".repeat(2000), "")
+        val rope = EnhancedRope.fromString("a".repeat(2000))
 
         val height = getHeight(rope)
         val expectedMaxHeight = kotlin.math.log2(2000.0).toInt() + 10 // Приблизительная оценка
@@ -36,7 +36,7 @@ class RopeBalanceTest {
     @Test
     fun testBalanceAfterOperations() {
         // Создаем большую верёвку
-        var rope: EnhancedRope = EnhancedRope.fromString("test".repeat(500), "")
+        var rope: EnhancedRope = EnhancedRope.fromString("test".repeat(500))
 
         // Выполняем множество операций вставки
         for (i in 0 until 100) {
@@ -54,7 +54,7 @@ class RopeBalanceTest {
     fun testRebalanceOperation() {
         // Создаем большую строку, которая должна быть автоматически сбалансирована
         val largeString = "x".repeat(3000)
-        val rope = EnhancedRope.fromString(largeString, "")
+        val rope = EnhancedRope.fromString(largeString)
 
         // Проверяем, что результат корректный
         assertEquals(largeString, rope.toString())

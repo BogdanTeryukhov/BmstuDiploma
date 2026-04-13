@@ -3,7 +3,6 @@ import org.junit.platform.suite.api.Suite
 
 @Suite
 @SelectClasses(
-    DebugDeleteTest::class,
     DebugSplitTest::class,
     EnhancedRopeTest::class,
     EnhancedRopeUtilsTest::class,

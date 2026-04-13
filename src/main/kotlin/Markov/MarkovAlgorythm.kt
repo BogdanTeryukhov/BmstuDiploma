@@ -20,16 +20,16 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
      */
     fun run(input: String, maxSteps: Int = 10000): String {
         // Создаем верёвку из входной строки
-        // Для оптимизации будем создавать верёвки с паттернами из правил
-        var rope: EnhancedRope = EnhancedRope.fromString(input, getCommonPattern())
+        var rope: EnhancedRope = EnhancedRope.fromString(input)
         var steps = 0
 
         while (steps < maxSteps) {
             var applied = false
+            var shouldTerminate = false
 
             for (rule in rules) {
                 // Используем эффективный поиск с помощью автоматных функций
-                val index = rope.findPattern(rule.left)
+                val index = rope.indexOf(rule.left)
 
                 if (index != -1) {
                     // Применяем правило: заменяем левую часть на правую
@@ -38,14 +38,34 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
 
                     applied = true
 
-                    // Если правило терминальное, завершаем выполнение
+                    // Если правило терминальное, запоминаем, что нужно остановиться
+                    // но продолжаем выполнение в текущем шаге
                     if (rule.isTerminal) {
-                        return rope.toString()
+                        shouldTerminate = true
                     }
 
                     // После применения правила начинаем проверку с начала
                     break
                 }
+            }
+
+            // Если было применено терминальное правило, останавливаем выполнение
+            // но сначала даем возможность применить другие правила в текущем шаге
+            if (shouldTerminate) {
+                // Продолжаем выполнение в текущем шаге для применения других правил
+                // которые могут быть найдены после изменений
+                for (rule in rules) {
+                    val index = rope.indexOf(rule.left)
+                    if (index != -1) {
+                        // Применяем правило: заменяем левую часть на правую
+                        rope = delete(rope, index, rule.left.length)
+                        rope = insert(rope, index, rule.right)
+
+                        // После применения правила начинаем проверку с начала
+                        break
+                    }
+                }
+                break
             }
 
             // Если ни одно правило не было применено, завершаем выполнение
@@ -68,7 +88,7 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
      * @return результат выполнения алгоритма
      */
     fun runWithTrace(input: String, maxSteps: Int = 10000, verbose: Boolean = false): String {
-        var rope: EnhancedRope = EnhancedRope.fromString(input, getCommonPattern())
+        var rope: EnhancedRope = EnhancedRope.fromString(input)
         var steps = 0
 
         if (verbose) {
@@ -77,9 +97,14 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
 
         while (steps < maxSteps) {
             var applied = false
+            var shouldTerminate = false
 
             for ((ruleIndex, rule) in rules.withIndex()) {
-                val index = rope.findPattern(rule.left)
+                val index = rope.indexOf(rule.left)
+
+                if (verbose) {
+                    println("Checking rule #$ruleIndex '${rule.left}' ->${if (rule.isTerminal) "." else ""} '${rule.right}': index = $index")
+                }
 
                 if (index != -1) {
                     if (verbose) {
@@ -95,15 +120,51 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
 
                     applied = true
 
+                    // Если правило терминальное, запоминаем, что нужно остановиться
+                    // но продолжаем выполнение в текущем шаге
                     if (rule.isTerminal) {
+                        shouldTerminate = true
                         if (verbose) {
-                            println("Terminal rule reached. Result: ${rope.toString()}")
+                            println("Terminal rule applied. Will stop after processing current step.")
                         }
-                        return rope.toString()
                     }
 
                     break
                 }
+            }
+
+            // Если было применено терминальное правило, останавливаем выполнение
+            // но сначала даем возможность применить другие правила в текущем шаге
+            if (shouldTerminate) {
+                if (verbose) {
+                    println("Terminal rule applied. Processing remaining rules in current step...")
+                }
+
+                // Продолжаем выполнение в текущем шаге для применения других правил
+                // которые могут быть найдены после изменений
+                for ((ruleIndex, rule) in rules.withIndex()) {
+                    val index = rope.indexOf(rule.left)
+                    if (index != -1) {
+                        if (verbose) {
+                            println("Post-terminal: Applying rule #$ruleIndex '${rule.left} ->${if (rule.isTerminal) "." else ""} ${rule.right}' at position $index")
+                        }
+
+                        rope = delete(rope, index, rule.left.length)
+                        rope = insert(rope, index, rule.right)
+
+                        if (verbose) {
+                            println("Post-terminal result: ${rope.toString()}")
+                        }
+
+                        // После применения правила начинаем проверку с начала
+                        break
+                    }
+                }
+
+                if (verbose) {
+                    println("Stopping execution after terminal rule processing.")
+                }
+                break
             }
 
             if (!applied) {
@@ -121,10 +182,5 @@ class MarkovAlgorithm(private val rules: List<Rule>) {
         }
 
         return rope.toString()
-    }
-
-    private fun getCommonPattern(): String {
-        if (rules.isEmpty()) return ""
-        return rules.first().left
     }
 }

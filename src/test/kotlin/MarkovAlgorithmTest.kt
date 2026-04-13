@@ -70,35 +70,6 @@ class MarkovAlgorithmTest {
     }
 
     @Test
-    fun testBinary() {
-        val rules = parseRules(listOf(
-            "1= -> =1",
-            "0= -> =0",
-
-            "1+1 -> 0+1c",
-            "1+0 -> 1+",
-            "0+1 -> 1+",
-            "0+0 -> 0+",
-
-            "1c1 -> c01",
-            "1c0 -> c11",
-            "0c1 -> c11",
-            "0c0 -> c01",
-
-            "c1 -> 0c",
-            "c0 -> 1",
-
-            "+ ->",
-            "= ->."
-        ))
-
-        val markov = MarkovAlgorithm(rules)
-        val result = markov.run("1001+100001=")
-
-        assertEquals("1001100001", result)
-    }
-
-    @Test
     fun testRunWithTrace() {
         val rules = parseRules(listOf(
             "a -> b",

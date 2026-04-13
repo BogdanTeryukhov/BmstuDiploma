@@ -10,7 +10,7 @@ class EnhancedRopeUtilsTest {
 
     @Test
     fun testSplit() {
-        val rope = EnhancedRope.fromString("hello world", "")
+        val rope = EnhancedRope.fromString("hello world")
         val (left, right) = split(rope, 6)
 
         assertEquals("hello ", left.toString())
@@ -20,7 +20,7 @@ class EnhancedRopeUtilsTest {
 
     @Test
     fun testInsert() {
-        val rope = EnhancedRope.fromString("hello world", "")
+        val rope = EnhancedRope.fromString("hello world")
         val result = insert(rope, 6, "beautiful ")
 
         assertEquals("hello beautiful world", result.toString())
@@ -29,7 +29,7 @@ class EnhancedRopeUtilsTest {
 
     @Test
     fun testDelete() {
-        val rope = EnhancedRope.fromString("hello beautiful world", "")
+        val rope = EnhancedRope.fromString("hello beautiful world")
         val result = delete(rope, 6, 10) // Удаляем "beautiful " (9 букв + 1 пробел = 10 символов)
 
         assertEquals("hello world", result.toString())
@@ -38,7 +38,7 @@ class EnhancedRopeUtilsTest {
 
     @Test
     fun testFindPattern() {
-        val rope = EnhancedRope.fromString("hello world", "")
+        val rope = EnhancedRope.fromString("hello world")
         val index = rope.findPattern("world")
 
         assertEquals(6, index) // "world" начинается с позиции 6
@@ -51,7 +51,7 @@ class EnhancedRopeUtilsTest {
     @Test
     fun testEdgeCases() {
         // Тест с пустой верёвкой
-        val empty = EnhancedRope.fromString("", "")
+        val empty = EnhancedRope.fromString("")
         val (left, right) = split(empty, 0)
 
         assertEquals("", left.toString())
