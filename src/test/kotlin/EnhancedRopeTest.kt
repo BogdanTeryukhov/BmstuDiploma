@@ -1,5 +1,5 @@
 import rope.EnhancedRope
-import automata.RegexState
+import automata.KmpAutomaton
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 
@@ -7,7 +7,7 @@ class EnhancedRopeTest {
 
     @Test
     fun testBasicRopeCreation() {
-        val rope = EnhancedRope.fromString("hello world", "world")
+        val rope = EnhancedRope.fromString("hello world")
 
         // Проверяем длину
         assertEquals(11, rope.length)
@@ -18,9 +18,9 @@ class EnhancedRopeTest {
 
     @Test
     fun testRopeConcatenation() {
-        val left = EnhancedRope.fromString("hello ", "lo")
-        val right = EnhancedRope.fromString("world", "wo")
-        val combined = EnhancedRope.concat(left, right, "lo")
+        val left = EnhancedRope.fromString("hello ")
+        val right = EnhancedRope.fromString("world")
+        val combined = EnhancedRope.concat(left, right)
 
         // Проверяем длину
         assertEquals(11, combined.length)
@@ -30,33 +30,28 @@ class EnhancedRopeTest {
     }
 
     @Test
-    fun testActionFunction() {
-        val rope = EnhancedRope.fromString("test string", "str")
+    fun testDynamicSearch() {
+        val rope = EnhancedRope.fromString("test string")
 
-        // Проверяем функцию действия
-        val actionFunc = rope.actionFunction
-        val result = actionFunc(RegexState.START)
-
-        // Результат зависит от паттерна, но должен быть каким-то состоянием
-        assertNotNull(result)
+        // Проверяем динамический поиск
+        val index = rope.indexOf("str")
+        // "str" находится в позиции 5
+        assertEquals(5, index)
     }
 
     @Test
-    fun testDistanceFunction() {
-        val rope = EnhancedRope.fromString("this is a test", "test")
+    fun testPatternSearch() {
+        val rope = EnhancedRope.fromString("this is a test")
 
-        // Проверяем функцию расстояния
-        val distanceFunc = rope.distanceFunction
-        val distance = distanceFunc(RegexState.START)
-
-        // "test" начинается с позиции 10, так что расстояние должно быть 14
-        // (позиция после последнего символа "test")
-        assertEquals(14, distance)
+        // Проверяем поиск паттерна
+        val index = rope.indexOf("test")
+        // "test" начинается с позиции 10
+        assertEquals(10, index)
     }
 
     @Test
     fun testIndexOf() {
-        val rope = EnhancedRope.fromString("hello world", "world")
+        val rope = EnhancedRope.fromString("hello world")
 
         // Проверяем поиск подстроки
         val index = rope.indexOf("world")
@@ -69,7 +64,7 @@ class EnhancedRopeTest {
 
     @Test
     fun testEmptyRope() {
-        val empty = EnhancedRope.fromString("", "test")
+        val empty = EnhancedRope.fromString("")
 
         // Проверяем пустую верёвку
         assertEquals(0, empty.length)

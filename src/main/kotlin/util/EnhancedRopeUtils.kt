@@ -1,6 +1,63 @@
 package util
 
 import rope.EnhancedRope
+import automata.KmpAutomaton
+
+/**
+ * Получает функцию действия для подверевки и конкретного автомата
+ */
+fun getActionFunctionForSubrope(rope: EnhancedRope, automaton: KmpAutomaton): (Int) -> Int {
+    return when (rope) {
+        is EnhancedRope.Leaf -> {
+            automaton.actionFunction(rope.text)
+        }
+
+        is EnhancedRope.Node -> {
+            fun(initialState: Int): Int {
+                // a(s+t) = a(t) * a(s) - сначала применяем действие левой части, потом правой
+                val intermediateState = getActionFunctionForSubrope(rope.left, automaton)(initialState)
+                return getActionFunctionForSubrope(rope.right, automaton)(intermediateState)
+            }
+        }
+    }
+}
+
+/**
+ * Ищет паттерн в подверевке с использованием автомата
+ */
+fun findPatternInSubrope(rope: EnhancedRope, automaton: KmpAutomaton, initialState: Int): Int {
+    return when (rope) {
+        is EnhancedRope.Leaf -> {
+            // Для листа используем стандартный поиск по тексту
+            val distanceFunc = automaton.distanceFunction(rope.text)
+            val distance = distanceFunc(initialState)
+            if (distance == -1) -1 else distance - automaton.pattern.length
+        }
+
+        is EnhancedRope.Node -> {
+            // Проверяем левое поддерево
+            val leftDistance = findPatternInSubrope(rope.left, automaton, initialState)
+
+            if (leftDistance != -1) {
+                // Нашли в левом поддереве
+                return leftDistance
+            }
+
+            // Если не нашли в левом поддереве, проверяем правое
+            // Но нужно учесть состояние после обработки левого поддерева
+            val stateAfterLeft = getActionFunctionForSubrope(rope.left, automaton)(initialState)
+            val rightDistance = findPatternInSubrope(rope.right, automaton, stateAfterLeft)
+
+            if (rightDistance != -1) {
+                // Нашли в правом поддереве, добавляем длину левого поддерева
+                return rope.left.length + rightDistance
+            }
+
+            // Не нашли нигде
+            return -1
+        }
+    }
+}
 
 /**
  * Разбивает верёвку на две части по указанному индексу
@@ -8,10 +65,10 @@ import rope.EnhancedRope
 fun split(rope: EnhancedRope, index: Int): Pair<EnhancedRope, EnhancedRope> {
     // Границы проверки
     if (index <= 0) {
-        return EnhancedRope.fromString("", "") to rope
+        return EnhancedRope.fromString("") to rope
     }
     if (index >= rope.length) {
-        return rope to EnhancedRope.fromString("", "")
+        return rope to EnhancedRope.fromString("")
     }
 
     return when (rope) {
@@ -19,7 +76,7 @@ fun split(rope: EnhancedRope, index: Int): Pair<EnhancedRope, EnhancedRope> {
             // Для листа просто разбиваем текст
             val leftText = rope.text.substring(0, index)
             val rightText = rope.text.substring(index)
-            EnhancedRope.fromString(leftText, "") to EnhancedRope.fromString(rightText, "")
+            EnhancedRope.fromString(leftText) to EnhancedRope.fromString(rightText)
         }
 
         is EnhancedRope.Node -> {
@@ -27,7 +84,7 @@ fun split(rope: EnhancedRope, index: Int): Pair<EnhancedRope, EnhancedRope> {
                 // Разбиение происходит в левой подверёвке
                 val (left, mid) = split(rope.left, index)
                 val right = if (mid.length > 0) {
-                    EnhancedRope.concat(mid, rope.right, "")
+                    EnhancedRope.concat(mid, rope.right)
                 } else {
                     rope.right
                 }
@@ -36,7 +93,7 @@ fun split(rope: EnhancedRope, index: Int): Pair<EnhancedRope, EnhancedRope> {
                 // Разбиение происходит в правой подверёвке
                 val (mid, right) = split(rope.right, index - rope.left.length)
                 val left = if (mid.length > 0) {
-                    EnhancedRope.concat(rope.left, mid, "")
+                    EnhancedRope.concat(rope.left, mid)
                 } else {
                     rope.left
                 }
@@ -51,8 +108,8 @@ fun split(rope: EnhancedRope, index: Int): Pair<EnhancedRope, EnhancedRope> {
  */
 fun insert(rope: EnhancedRope, index: Int, value: String): EnhancedRope {
     val (left, right) = split(rope, index)
-    val inserted = EnhancedRope.fromString(value, "")
-    return EnhancedRope.concat(EnhancedRope.concat(left, inserted, ""), right, "")
+    val inserted = EnhancedRope.fromString(value)
+    return EnhancedRope.concat(EnhancedRope.concat(left, inserted), right)
 }
 
 /**
@@ -61,16 +118,13 @@ fun insert(rope: EnhancedRope, index: Int, value: String): EnhancedRope {
 fun delete(rope: EnhancedRope, start: Int, length: Int): EnhancedRope {
     val (left, rest) = split(rope, start)
     val (_, right) = split(rest, length)
-    return EnhancedRope.concat(left, right, "")
+    return EnhancedRope.concat(left, right)
 }
 
-/**
- * Поиск подстроки в верёвке
- */
+
+
 fun EnhancedRope.findPattern(pattern: String): Int {
-    // Для поиска произвольного паттерна используем стандартный поиск
-    // В реальной реализации можно было бы создавать временный автомат
-    return this.toString().indexOf(pattern)
+    return this.indexOf(pattern)
 }
 
 /**

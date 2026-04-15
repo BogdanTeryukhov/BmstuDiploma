@@ -7,7 +7,7 @@ class DebugSplitTest {
 
     @Test
     fun debugSplitAndDelete() {
-        val rope = EnhancedRope.fromString("hello beautiful world", "test")
+        val rope = EnhancedRope.fromString("hello beautiful world")
         println("Original: '${rope.toString()}' length: ${rope.length}")
 
         // Разбиваем на позиции 6
@@ -21,7 +21,7 @@ class DebugSplitTest {
         println("Right: '${right.toString()}' length: ${right.length}")
 
         // Склеиваем left и right
-        val result = EnhancedRope.concat(left, right, "")
+        val result = EnhancedRope.concat(left, right)
         println("Result: '${result.toString()}' length: ${result.length}")
     }
 }

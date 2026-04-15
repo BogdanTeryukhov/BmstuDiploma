@@ -1,7 +1,6 @@
 package rope
 
-import automata.RegexAutomaton
-import automata.RegexState
+import automata.KmpAutomaton
 
 /**
  * Улучшенная версия верёвки с автоматными функциями для эффективного поиска
@@ -11,31 +10,10 @@ sealed class EnhancedRope {
     abstract val length: Int
 
     /**
-     * Функция действия a(s) - преобразует состояние автомата после обработки содержимого верёвки
-     */
-    abstract val actionFunction: (RegexState) -> RegexState
-
-    /**
-     * Функция расстояния f(s) - показывает через сколько символов достигается финальное состояние
-     */
-    abstract val distanceFunction: (RegexState) -> Int
-
-    /**
      * Лист верёвки - содержит текст
      */
-    data class Leaf(
-        val text: String,
-        override val actionFunction: (RegexState) -> RegexState,
-        override val distanceFunction: (RegexState) -> Int
-    ) : EnhancedRope() {
+    data class Leaf(val text: String) : EnhancedRope() {
         override val length: Int = text.length
-
-        constructor(text: String, pattern: String) : this(
-            text,
-            createActionFunction(text, pattern),
-            createDistanceFunction(text, pattern)
-        )
-
         override fun toString(): String = this.text
     }
 
@@ -44,19 +22,9 @@ sealed class EnhancedRope {
      */
     data class Node(
         val left: EnhancedRope,
-        val right: EnhancedRope,
-        override val actionFunction: (RegexState) -> RegexState,
-        override val distanceFunction: (RegexState) -> Int
+        val right: EnhancedRope
     ) : EnhancedRope() {
         override val length: Int = left.length + right.length
-
-        constructor(left: EnhancedRope, right: EnhancedRope, pattern: String) : this(
-            left,
-            right,
-            createCombinedActionFunction(left, right),
-            createCombinedDistanceFunction(left, right, pattern)
-        )
-
         override fun toString(): String = this.left.toString() + this.right.toString()
     }
 
@@ -67,84 +35,27 @@ sealed class EnhancedRope {
         /**
          * Создает верёвку из строки
          */
-        fun fromString(s: String, pattern: String = ""): EnhancedRope {
+        fun fromString(s: String): EnhancedRope {
             if (s.length <= MAX_LEAF_SIZE) {
-                return Leaf(s, pattern)
+                return Leaf(s)
             }
 
             // Для больших строк разбиваем на части для балансировки
             val mid = s.length / 2
-            val left = fromString(s.substring(0, mid), pattern)
-            val right = fromString(s.substring(mid), pattern)
-            return Node(left, right, pattern).balance()
+            val left = fromString(s.substring(0, mid))
+            val right = fromString(s.substring(mid))
+            return Node(left, right).balance()
         }
 
         /**
          * Конкатенация двух верёвок с автоматической балансировкой
          */
-        fun concat(a: EnhancedRope, b: EnhancedRope, pattern: String = ""): EnhancedRope {
+        fun concat(a: EnhancedRope, b: EnhancedRope): EnhancedRope {
             if (a.length == 0) return b
             if (b.length == 0) return a
 
-            val newNode = Node(a, b, pattern)
+            val newNode = Node(a, b)
             return newNode.balance()
-        }
-
-        /**
-         * Создает функцию действия для текста и паттерна
-         */
-        private fun createActionFunction(text: String, pattern: String): (RegexState) -> RegexState {
-            if (pattern.isEmpty()) {
-                return fun(state: RegexState): RegexState = state // Пустой паттерн ничего не меняет
-            }
-
-            val automaton = RegexAutomaton(pattern)
-            return automaton.actionFunction(text)
-        }
-
-        private fun createDistanceFunction(text: String, pattern: String): (RegexState) -> Int {
-            if (pattern.isEmpty()) {
-                return fun(_: RegexState): Int = 0 // Пустой паттерн найден сразу
-            }
-
-            val automaton = RegexAutomaton(pattern)
-            return automaton.distanceFunction(text)
-        }
-
-        private fun createCombinedActionFunction(left: EnhancedRope, right: EnhancedRope): (RegexState) -> RegexState {
-            return fun(initialState: RegexState): RegexState {
-                // a(s+t) = a(t) * a(s) - сначала применяем действие левой части, потом правой
-                val intermediateState = left.actionFunction(initialState)
-                return right.actionFunction(intermediateState)
-            }
-        }
-
-        private fun createCombinedDistanceFunction(
-            left: EnhancedRope,
-            right: EnhancedRope,
-            pattern: String
-        ): (RegexState) -> Int {
-            return fun(initialState: RegexState): Int {
-                // Сначала проверяем левую часть
-                val leftDistance = left.distanceFunction(initialState)
-
-                if (leftDistance != -1) {
-                    // Нашли в левой части
-                    return leftDistance
-                }
-
-                // Если не нашли в левой части, проверяем правую часть
-                // Но нужно учесть состояние после обработки левой части
-                val stateAfterLeft = left.actionFunction(initialState)
-                val rightDistance = right.distanceFunction(stateAfterLeft)
-
-                return if (rightDistance != -1) {
-                    // Нашли в правой части, добавляем длину левой части
-                    left.length + rightDistance
-                } else {
-                    -1 // Не нашли нигде
-                }
-            }
         }
     }
 
@@ -160,9 +71,21 @@ sealed class EnhancedRope {
      * Возвращает позицию начала найденной подстроки или -1 если не найдено
      */
     fun indexOf(pattern: String): Int {
-        // Для простоты используем автомат для поиска
-        val automaton = RegexAutomaton(pattern)
-        return automaton.findPatternStart(this.toString())
+        if (pattern.isEmpty()) return 0
+        if (pattern.length > this.length) return -1
+
+        // Создаем автомат для поиска подстроки
+        val automaton = KmpAutomaton(pattern)
+
+        // Используем динамическое создание аннотаций для эффективного поиска
+        return this.findPatternWithAutomaton(automaton, automaton.initialState)
+    }
+
+    /**
+     * Поиск подстроки с использованием конечного автомата
+     */
+    private fun findPatternWithAutomaton(automaton: KmpAutomaton, initialState: Int): Int {
+        return util.findPatternInSubrope(this, automaton, initialState)
     }
 
     /**
@@ -187,7 +110,7 @@ sealed class EnhancedRope {
 
                 // Если балансировка изменила структуру, создаем новый узел
                 if (balancedLeft !== this.left || balancedRight !== this.right) {
-                    return Node(balancedLeft, balancedRight, this.actionFunction, this.distanceFunction)
+                    return Node(balancedLeft, balancedRight)
                 }
 
                 this
@@ -200,15 +123,9 @@ sealed class EnhancedRope {
      */
     private fun rebalance(): EnhancedRope {
         // Преобразуем в строку и создаем сбалансированное дерево
-        return Companion.fromString(this.toString(), getPatternFromNode())
+        return Companion.fromString(this.toString())
     }
 
-    /**
-     * Получает паттерн из узла для создания новых автоматов
-     */
-    private fun getPatternFromNode(): String {
-        return ""
-    }
 
     /**
      * Вычисляет высоту дерева

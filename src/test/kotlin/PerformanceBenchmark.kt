@@ -67,7 +67,7 @@ class PerformanceBenchmark {
 
         // Тестируем поиск в EnhancedRope
         println("\nTesting rope search...")
-        val rope = EnhancedRope.fromString(largeText, "pattern")
+        val rope = EnhancedRope.fromString(largeText)
         val ropeTime = measureTimeMillis {
             val index = rope.findPattern("pattern")
             println("Rope search result: $index")
