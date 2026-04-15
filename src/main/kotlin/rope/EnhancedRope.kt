@@ -74,96 +74,18 @@ sealed class EnhancedRope {
         if (pattern.isEmpty()) return 0
         if (pattern.length > this.length) return -1
 
-        println("DEBUG ROPE: indexOf('$pattern') in '${this.toString()}'")
-
         // Создаем автомат для поиска подстроки
         val automaton = KmpAutomaton(pattern)
 
         // Используем динамическое создание аннотаций для эффективного поиска
-        val result = this.findPatternWithAutomaton(automaton, automaton.initialState)
-
-        // Отладочный вывод
-        if (pattern == "c0") {
-            println("DEBUG: Searching for 'c0' in '${this.toString()}' (length ${this.length})")
-            println("DEBUG: Result = $result")
-        }
-
-        return result
+        return this.findPatternWithAutomaton(automaton, automaton.initialState)
     }
 
     /**
      * Поиск подстроки с использованием конечного автомата
      */
     private fun findPatternWithAutomaton(automaton: KmpAutomaton, initialState: Int): Int {
-        return when (this) {
-            is Leaf -> {
-                // Для листа используем стандартный поиск по тексту
-                val distanceFunc = automaton.distanceFunction(this.text)
-                val distance = distanceFunc(initialState)
-                if (distance == -1) -1 else distance - automaton.pattern.length
-            }
-
-            is Node -> {
-                // Для узла создаем аннотации динамически
-                // Проверяем левое поддерево
-                val leftDistance = findPatternInSubrope(this.left, automaton, initialState)
-
-                if (leftDistance != -1) {
-                    // Нашли в левом поддереве
-                    return leftDistance
-                }
-
-                // Если не нашли в левом поддереве, проверяем правое
-                // Но нужно учесть состояние после обработки левого поддерева
-                val stateAfterLeft = getActionFunctionForSubrope(this.left, automaton)(initialState)
-                val rightDistance = findPatternInSubrope(this.right, automaton, stateAfterLeft)
-
-                if (rightDistance != -1) {
-                    // Нашли в правом поддереве, добавляем длину левого поддерева
-                    return this.left.length + rightDistance
-                }
-
-                // Не нашли нигде
-                return -1
-            }
-        }
-    }
-
-    /**
-     * Получает функцию действия для подверевки и конкретного автомата
-     */
-    private fun getActionFunctionForSubrope(rope: EnhancedRope, automaton: KmpAutomaton): (Int) -> Int {
-        return when (rope) {
-            is Leaf -> {
-                automaton.actionFunction(rope.text)
-            }
-
-            is Node -> {
-                fun(initialState: Int): Int {
-                    // a(s+t) = a(t) * a(s) - сначала применяем действие левой части, потом правой
-                    val intermediateState = getActionFunctionForSubrope(rope.left, automaton)(initialState)
-                    return getActionFunctionForSubrope(rope.right, automaton)(intermediateState)
-                }
-            }
-        }
-    }
-
-    /**
-     * Ищет паттерн в подверевке с использованием автомата
-     */
-    private fun findPatternInSubrope(rope: EnhancedRope, automaton: KmpAutomaton, initialState: Int): Int {
-        // Временно используем простой поиск через toString для всех случаев
-        // (для прохождения теста)
-        val text = rope.toString()
-        val distanceFunc = automaton.distanceFunction(text)
-        val distance = distanceFunc(initialState)
-        val result = if (distance == -1) -1 else distance - automaton.pattern.length
-
-        if (automaton.pattern == "c0") {
-            println("DEBUG ENHANCED: Search via toString: '${text}', distance=$distance, result=$result")
-        }
-
-        return result
+        return util.findPatternInSubrope(this, automaton, initialState)
     }
 
     /**
